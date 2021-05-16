@@ -37,11 +37,12 @@ def qlearning_dataset_with_mc_return(env, dataset=None, terminate_on_end=False, 
     
     rewards_of_current_episode = []
     
-    # The author previously range(N-1), which means that i is up to N-2, the second last index.
+    # The author previously used range(N-1), which means that i is up to N-2, the second last index.
     # The problem is that, for the second last transition, both final_timestep and done_bool 
     # are false. As a result, the MC returns for the final episode does not get calculated. 
     #
-    # I changed it so that i goes up to N-1. 
+    # I changed it so that i goes up to N-1, the last index. It turns out that for the last index timeout
+    # is always True. This makes final_timestep true and allows MC returns to be calculated.
     
     for i in tqdm(range(N)):  
         
@@ -49,9 +50,8 @@ def qlearning_dataset_with_mc_return(env, dataset=None, terminate_on_end=False, 
         if i + 1 > N - 1:  # N - 1 is the last timestep; so here we are asking, is i+1 an invalid index?
             new_obs = np.zeros_like(obs)
             # Reasoning on why this is the correct thing to do:
-            # At the very end, there are two possible scenarios
-            # - no done flag: final_timestep=True, last transition is ignored (so this full of zeros next state is not used)
-            # - yes done flag: since done=True, the value of the next state is not used
+            # At the very end, there is only one possible scenario:
+            # - final_timestep=True, last transition is ignored (so this full of zeros next state is not used)
         else:
             new_obs = dataset['observations'][i+1].astype(np.float32)
         action = dataset['actions'][i].astype(np.float32)
