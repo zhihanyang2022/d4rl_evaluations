@@ -9,30 +9,13 @@ def compute_mc_returns(rewards):
     mc_returns = deque()
     for r in reversed(rewards):
         mc_return = r + GAMMA * mc_return
-        mc_returns.appendleft(mc_return)  # if list is used then O(n) operation
+        mc_returns.appendleft(mc_return)  # using deque is more efficient lol
     return list(mc_returns)
     
 def qlearning_dataset_with_mc_return(env, dataset=None, terminate_on_end=False, **kwargs):
-    """
-    Returns datasets formatted for use by standard Q-learning algorithms,
-    with observations, actions, next_observations, rewards, and a terminal
-    flag.
-    Args:
-        env: An OfflineEnv object.
-        dataset: An optional dataset to pass in for processing. If None,
-            the dataset will default to env.get_dataset()
-        terminate_on_end (bool): Set done=True on the last timestep
-            in a trajectory. Default is False, and will discard the
-            last timestep in each trajectory.
-        **kwargs: Arguments to pass to env.get_dataset().
-    Returns:
-        A dictionary containing keys:
-            observations: An N x dim_obs array of observations.
-            actions: An N x dim_action array of actions.
-            next_observations: An N x dim_obs array of next observations.
-            rewards: An N-dim float array of rewards.
-            terminals: An N-dim boolean array of "done" or episode termination flags.
-    """
+    
+    """Made minimal changes (to compute MC returns) from the original qlearning_dataset function from D4RL."""
+    
     if dataset is None:
         dataset = env.get_dataset(**kwargs)
 
@@ -54,12 +37,18 @@ def qlearning_dataset_with_mc_return(env, dataset=None, terminate_on_end=False, 
     
     rewards_of_current_episode = []
     
-    for i in tqdm(range(N)): 
+    # The author previously range(N-1), which means that i is up to N-2, the second last index.
+    # The problem is that, for the second last transition, both final_timestep and done_bool 
+    # are false. As a result, the MC returns for the final episode does not get calculated. 
+    #
+    # I changed it so that i goes up to N-1. 
+    
+    for i in tqdm(range(N)):  
         
         obs = dataset['observations'][i].astype(np.float32)
         if i + 1 > N - 1:  # N - 1 is the last timestep; so here we are asking, is i+1 an invalid index?
             new_obs = np.zeros_like(obs)
-            # Reasoning on why this is the correct thing to do
+            # Reasoning on why this is the correct thing to do:
             # At the very end, there are two possible scenarios
             # - no done flag: final_timestep=True, last transition is ignored (so this full of zeros next state is not used)
             # - yes done flag: since done=True, the value of the next state is not used
@@ -71,30 +60,46 @@ def qlearning_dataset_with_mc_return(env, dataset=None, terminate_on_end=False, 
         
         rewards_of_current_episode.append(reward)
 
-        if use_timeouts:  # we are in this case, since all D4RL datasets have the "timeouts" field
+        if use_timeouts:  # Always true for our use case.
             final_timestep = dataset['timeouts'][i]
         else:
             final_timestep = (episode_step == env._max_episode_steps - 1)
         
-        if (not terminate_on_end) and final_timestep:  # if final_timestep, we are in this case
+        # We are using terminate_on_end=False, so the following if statement is entered
+        # whenever final_timestep=True. In this case, we ignore the final transition, because
+        # the next state is not available, due to the "bad" design of rlkit.
+        
+        if (not terminate_on_end) and final_timestep:
             
-            # Skip this transition and don't apply terminals on the last step of an episode
             episode_step = 0
             
-            # last transition is not actually included in the dataset (no next state), but MC returns should consider it
-            # so essentially [:-1] deal with the un-matched length of mc_returns and other stuff
+            # The last transition is not actually included in the dataset (no next state), but nevertheless 
+            # MC returns can consider it with no problem.
+            # Essentially, [:-1] deal with the mis-matched length of mc_returns (include last transition) and 
+            # other stuff (do not include last transition).
             
             mc_returns = compute_mc_returns(rewards_of_current_episode)[:-1]
-            #assert len(mc_returns) == 999
             mc_returns_.extend(mc_returns)
+            
             rewards_of_current_episode = []
             
             continue  
+            
+        # If we are here, it means that final_timestep=False. 
+        
+        # The following if statement is entered if final_timestep=False (otherwise the previous if is entered)
+        # and done_bool=True. In this case, we don't put a "continue" at the end because the invalid next state
+        # will be ignored during bootstrapping with the help of the done flag. 
+        
+        # Computing MC returns follows the exact same procedure as in the previous if.
         
         if done_bool or final_timestep:
+            
             episode_step = 0
+            
             mc_returns = compute_mc_returns(rewards_of_current_episode)
             mc_returns_.extend(mc_returns)
+            
             rewards_of_current_episode = []
             
         obs_.append(obs)
