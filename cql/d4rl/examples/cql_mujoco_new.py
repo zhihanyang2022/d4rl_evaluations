@@ -280,9 +280,9 @@ if __name__ == "__main__":
     # added/modified by Zhihan: use entire buffer
     variant['replay_buffer_size'] = mhf.get_dataset_size(args.env)
 
-    # added/modified by Zhihan: use 500K grad steps, report avg return across 10 episodes per 5K grad steps
+    # added/modified by Zhihan: use 1M grad steps, report avg return across 10 episodes per 10K grad steps
     variant['algorithm_kwargs']['num_epochs'] = 100
-    variant['algorithm_kwargs']['num_trains_per_train_loop'] = int(5e3)
+    variant['algorithm_kwargs']['num_trains_per_train_loop'] = int(1e4)
     variant['algorithm_kwargs']['num_eval_steps_per_epoch'] = 10 * variant['algorithm_kwargs']['max_path_length']
 
     # added/modified by Zhihan: convenient log dir
