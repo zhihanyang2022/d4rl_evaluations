@@ -156,6 +156,7 @@ class CQLTrainer(TorchTrainer):
         next_obs = batch['next_observations']
         
         mc_returns = batch['mc_returns'] if 'mc_returns' in batch.keys() else None
+        next_actions = batch['next_actions'] if 'next_actions' in batch.keys() else None
 
         """
         Policy and Alpha Loss
@@ -199,13 +200,18 @@ class CQLTrainer(TorchTrainer):
         q1_pred = self.qf1(obs, actions)
         if self.num_qs > 1:
             q2_pred = self.qf2(obs, actions)
-        
-        new_next_actions, _, _, new_log_pi, *_ = self.policy(
-            next_obs, reparameterize=True, return_log_prob=True,
-        )
-        new_curr_actions, _, _, new_curr_log_pi, *_ = self.policy(
-            obs, reparameterize=True, return_log_prob=True,
-        )
+
+        if next_actions is None:
+            new_next_actions, _, _, new_log_pi, *_ = self.policy(
+                next_obs, reparameterize=True, return_log_prob=True,
+            )
+            new_curr_actions, _, _, new_curr_log_pi, *_ = self.policy(
+                obs, reparameterize=True, return_log_prob=True,
+            )
+        else:
+            # added for CQL beta
+            new_next_actions = next_actions
+            new_log_pi = self.policy.log_prob(next_obs, next_actions)
 
         if not self.max_q_backup:
             if self.num_qs == 1:

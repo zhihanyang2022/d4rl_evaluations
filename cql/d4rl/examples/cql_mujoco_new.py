@@ -3,12 +3,14 @@ import sys
 sys.path.append('.')
 import my_helper_functions as mhf
 from qlearning_dataset_with_mc_return import qlearning_dataset_with_mc_return
+from qlearning_dataset_with_next_action import qlearning_dataset_with_next_action
 
 sys.path.append('cql/d4rl')
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.data_management.env_replay_buffer import EnvReplayBuffer
 from rlkit.data_management.env_replay_buffer_with_return import EnvReplayBufferWithReturn
+from rlkit.data_management.env_replay_buffer_with_next_action import EnvReplayBufferWithNextAction
 from rlkit.envs.wrappers import NormalizedBoxEnv
 from rlkit.launchers.launcher_util import setup_logger
 from rlkit.samplers.data_collector import MdpPathCollector, CustomMDPPathCollector
@@ -23,6 +25,7 @@ import numpy as np
 import h5py
 import d4rl, gym
 
+
 def load_hdf5(dataset, replay_buffer):
     replay_buffer._observations = dataset['observations']
     replay_buffer._next_obs = dataset['next_observations']
@@ -33,6 +36,7 @@ def load_hdf5(dataset, replay_buffer):
     print ('Number of terminals on: ', replay_buffer._terminals.sum())
     replay_buffer._top = replay_buffer._size
 
+
 def load_hdf5_with_mc_return(dataset, replay_buffer):
     replay_buffer._observations = dataset['observations']
     replay_buffer._next_obs = dataset['next_observations']
@@ -40,11 +44,20 @@ def load_hdf5_with_mc_return(dataset, replay_buffer):
     replay_buffer._rewards = np.expand_dims(np.squeeze(dataset['rewards']), 1)
     replay_buffer._terminals = np.expand_dims(np.squeeze(dataset['terminals']), 1)  
     replay_buffer._mc_returns = np.expand_dims(np.squeeze(dataset['mc_returns']), 1)
-    print(replay_buffer._mc_returns.shape)
-    print(replay_buffer._observations.shape)
-    print(replay_buffer._rewards.shape)
     replay_buffer._size = dataset['terminals'].shape[0]
     print ('Number of terminals on: ', replay_buffer._terminals.sum())
+    replay_buffer._top = replay_buffer._size
+
+
+def load_hdf5_with_next_action(dataset, replay_buffer):
+    replay_buffer._observations = dataset['observations']
+    replay_buffer._next_obs = dataset['next_observations']
+    replay_buffer._actions = dataset['actions']
+    replay_buffer._rewards = np.expand_dims(np.squeeze(dataset['rewards']), 1)
+    replay_buffer._terminals = np.expand_dims(np.squeeze(dataset['terminals']), 1)
+    replay_buffer._next_actions = dataset['next_actions']
+    replay_buffer._size = dataset['terminals'].shape[0]
+    print('Number of terminals on: ', replay_buffer._terminals.sum())
     replay_buffer._top = replay_buffer._size
 
     
@@ -92,6 +105,9 @@ def experiment(variant):
     buffer_filename = None
     if variant['buffer_filename'] is not None:
         buffer_filename = variant['buffer_filename']
+
+    # =========================================================
+    # different dataset modifications
     
     if variant['use_sil']:
         
@@ -101,6 +117,17 @@ def experiment(variant):
         )
         
         load_hdf5_with_mc_return(qlearning_dataset_with_mc_return(eval_env), replay_buffer)
+
+    elif variant['cql_beta']:
+
+        replay_buffer = EnvReplayBufferWithNextAction(
+            variant['replay_buffer_size'],
+            expl_env,
+        )
+
+        load_hdf5_with_next_action(qlearning_dataset_with_next_action(eval_env), replay_buffer)
+
+        pass
         
     else:  # do the standard thing
         
@@ -115,6 +142,8 @@ def experiment(variant):
             load_hdf5(d4rl.basic_dataset(eval_env), replay_buffer) 
         else:
             load_hdf5(d4rl.qlearning_dataset(eval_env), replay_buffer)
+
+    # =========================================================
        
     trainer = CQLTrainer(
         env=eval_env,
@@ -221,11 +250,15 @@ if __name__ == "__main__":
     parser.add_argument('--lagrange_thresh', default=5.0, type=float)         # the value of tau, corresponds to the CQL(lagrange) version
     parser.add_argument('--seed', default=10, type=int)
     parser.add_argument('--use_sil', default='False', type=str)  # added for the new idea
+    parser.add_argument('--cql_beta', default='False', type=str)  # added for the new idea
 
     args = parser.parse_args()
     enable_gpus(args.gpu)
     
     variant['use_sil'] = (True if args.use_sil == 'True' else False)
+    variant['cql_beta'] = (True if args.cql_beta == 'True' else False)
+
+    assert not (variant['use_sil'] and variant['cql_beta']), "can't use these two together at this point"
     
     variant['trainer_kwargs']['max_q_backup'] = (True if args.max_q_backup == 'True' else False)
     variant['trainer_kwargs']['deterministic_backup'] = (True if args.deterministic_backup == 'True' else False)
