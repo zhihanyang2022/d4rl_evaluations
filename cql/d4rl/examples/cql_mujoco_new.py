@@ -285,6 +285,9 @@ if __name__ == "__main__":
     variant['algorithm_kwargs']['num_trains_per_train_loop'] = int(1e4)
     variant['algorithm_kwargs']['num_eval_steps_per_epoch'] = 10 * variant['algorithm_kwargs']['max_path_length']
 
+    print('Epochs:', variant['algorithm_kwargs']['num_epochs'])
+    print('Num trains per epoch:', variant['algorithm_kwargs']['num_trains_per_train_loop'])
+
     # added/modified by Zhihan: convenient log dir
 
     algo_name = 'CQL'
