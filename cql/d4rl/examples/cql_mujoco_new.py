@@ -125,9 +125,7 @@ def experiment(variant):
             expl_env,
         )
 
-        load_hdf5_with_next_action(qlearning_dataset_with_next_action(eval_env), replay_buffer)
-
-        pass
+        load_hdf5_with_next_action(qlearning_dataset_with_next_action(variant['env_name']), replay_buffer)
         
     else:  # do the standard thing
         
