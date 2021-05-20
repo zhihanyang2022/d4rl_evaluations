@@ -120,13 +120,14 @@ def experiment(variant):
 
     elif variant['cql_beta']:
 
+        print('DOING CQL BETA')
+
         replay_buffer = EnvReplayBufferWithNextAction(
             variant['replay_buffer_size'],
             expl_env,
         )
 
         load_hdf5_with_next_action(qlearning_dataset_with_next_action(variant['env_name']), replay_buffer)
-        print('here 1')
         
     else:  # do the standard thing
         
@@ -284,10 +285,19 @@ if __name__ == "__main__":
     variant['algorithm_kwargs']['num_eval_steps_per_epoch'] = 10 * variant['algorithm_kwargs']['max_path_length']
 
     # added/modified by Zhihan: convenient log dir
+
+    algo_name = 'CQL'
+    if variant['use_sil']:
+        algo_name += '_SIL'
+    elif variant['cql_beta']:
+        algo_name += '_BETA'
+
+    print('Algo name:', algo_name)
+
     setup_logger(
         log_dir=mhf.get_log_dir(
             base_dir='results',
-            algo_dir='CQL' if not variant['use_sil'] else 'CQL_SIL',
+            algo_dir=algo_name,
             env_dir=args.env,
             seed_dir=args.seed
         )

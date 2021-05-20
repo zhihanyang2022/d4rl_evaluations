@@ -210,7 +210,6 @@ class CQLTrainer(TorchTrainer):
             )
         else:
             # added for CQL beta
-            print('here 2')
             new_next_actions = next_actions
             new_log_pi = self.policy.log_prob(next_obs, next_actions)
 
