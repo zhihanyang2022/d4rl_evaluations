@@ -126,6 +126,7 @@ def experiment(variant):
         )
 
         load_hdf5_with_next_action(qlearning_dataset_with_next_action(variant['env_name']), replay_buffer)
+        print('here 1')
         
     else:  # do the standard thing
         
