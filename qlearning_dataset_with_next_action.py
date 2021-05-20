@@ -108,6 +108,25 @@ def _parse_v0(env_id):
     return trajs
 
 
+def parse_S_A_R_D_NS_from_trajs(trajs):
+
+    s, a, r, d, ns, = [], [], [], [], []
+
+    for traj in trajs:
+
+        traj_len = len(traj.rewards)
+
+        for t in range(traj_len):
+
+            s.append(traj.states[t])
+            a.append(traj.actions[t])
+            r.append(traj.rewards[t])
+            d.append(traj.dones[t])
+            ns.append(traj.states[t + 1])
+
+    return s, a, r, d, ns
+
+
 def parse_S_A_R_D_NS_NA_from_trajs(trajs):
     
     s, a, r, d, ns, na = [], [], [], [], [], []
@@ -135,6 +154,18 @@ def parse_S_A_R_D_NS_NA_from_trajs(trajs):
             ns.append(traj.states[t+1])
     
     return s, a, r, d, ns, na
+
+
+def qlearning_dataset_wonjoon(env_id):
+    trajs = _parse_v0(env_id)
+    s, a, r, d, ns = parse_S_A_R_D_NS_from_trajs(trajs)
+    return {
+        'observations': np.array(s),
+        'actions': np.array(a),
+        'rewards': np.array(r),
+        'terminals': np.array(d),
+        'next_observations': np.array(ns),
+    }
 
 
 def qlearning_dataset_with_next_action(env_id):

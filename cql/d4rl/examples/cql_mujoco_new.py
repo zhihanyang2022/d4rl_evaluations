@@ -3,7 +3,7 @@ import sys
 sys.path.append('.')
 import my_helper_functions as mhf
 from qlearning_dataset_with_mc_return import qlearning_dataset_with_mc_return
-from qlearning_dataset_with_next_action import qlearning_dataset_with_next_action
+from qlearning_dataset_with_next_action import qlearning_dataset_wonjoon, qlearning_dataset_with_next_action
 
 sys.path.append('cql/d4rl')
 
@@ -136,12 +136,13 @@ def experiment(variant):
             expl_env,
         )
         
-        if variant['load_buffer'] and buffer_filename is not None:
-            replay_buffer.load_buffer(buffer_filename)
-        elif 'random-expert' in variant['env_name']:
-            load_hdf5(d4rl.basic_dataset(eval_env), replay_buffer) 
-        else:
-            load_hdf5(d4rl.qlearning_dataset(eval_env), replay_buffer)
+        # if variant['load_buffer'] and buffer_filename is not None:
+        #     replay_buffer.load_buffer(buffer_filename)
+        # elif 'random-expert' in variant['env_name']:
+        #     load_hdf5(d4rl.basic_dataset(eval_env), replay_buffer)
+        # else:
+        #     load_hdf5(d4rl.qlearning_dataset(eval_env), replay_buffer)
+        load_hdf5(qlearning_dataset_wonjoon(variant['env_name']), replay_buffer)
 
     # =========================================================
        
