@@ -137,8 +137,8 @@ def parse_S_A_R_D_NS_NA_from_trajs(trajs):
     return s, a, r, d, ns, na
 
 
-def qlearning_dataset_with_next_action(env):
-    trajs = _parse_v0(env)
+def qlearning_dataset_with_next_action(env_id):
+    trajs = _parse_v0(env_id)
     s, a, r, d, ns, na = parse_S_A_R_D_NS_NA_from_trajs(trajs)
     return {
         'observations': np.array(s),
