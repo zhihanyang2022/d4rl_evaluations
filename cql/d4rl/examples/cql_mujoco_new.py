@@ -309,7 +309,7 @@ if __name__ == "__main__":
 
     print('Log dir:', log_dir)
 
-    shutil.rmtree(log_dir)  # overwrite any previous stuff written in here by deleting the directory
+    shutil.rmtree(log_dir, ignore_errors=True)  # overwrite any previous stuff written in here by deleting the directory
     # later on setup_logger would re-create it anyway
 
     setup_logger(
