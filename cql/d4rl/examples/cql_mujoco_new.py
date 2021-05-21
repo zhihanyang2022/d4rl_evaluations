@@ -25,6 +25,8 @@ import numpy as np
 import h5py
 import d4rl, gym
 
+import shutil
+
 
 def load_hdf5(dataset, replay_buffer):
     replay_buffer._observations = dataset['observations']
@@ -111,7 +113,7 @@ def experiment(variant):
     
     if variant['use_sil']:
 
-        print('Loading data for CQL SIL')
+        print('Internal report: loading data for CQL SIL')
 
         replay_buffer = EnvReplayBufferWithReturn(
             variant['replay_buffer_size'],
@@ -122,7 +124,7 @@ def experiment(variant):
 
     elif variant['cql_beta']:
 
-        print('Loading data for CQL beta')
+        print('Internal report: Loading data for CQL beta')
 
         replay_buffer = EnvReplayBufferWithNextAction(
             variant['replay_buffer_size'],
@@ -133,8 +135,6 @@ def experiment(variant):
         
     else:  # do the standard thing
 
-        print('Loading data for CQL')
-        
         replay_buffer = EnvReplayBuffer(
             variant['replay_buffer_size'],
             expl_env,
@@ -300,15 +300,20 @@ if __name__ == "__main__":
     elif variant['cql_beta']:
         algo_name += '_BETA'
 
-    print('Algo name:', algo_name)
-
-    setup_logger(
-        log_dir=mhf.get_log_dir(
+    log_dir = mhf.get_log_dir(
             base_dir='results',
             algo_dir=algo_name,
             env_dir=args.env,
             seed_dir=args.seed
-        )
+    )
+
+    print('Log dir:', log_dir)
+
+    shutil.rmtree(log_dir)  # overwrite any previous stuff written in here by deleting the directory
+    # later on setup_logger would re-create it anyway
+
+    setup_logger(
+        log_dir=log_dir
     )
 
     ptu.set_gpu_mode(True)
