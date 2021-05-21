@@ -132,20 +132,30 @@ def experiment(variant):
         )
 
         load_hdf5_with_next_action(qlearning_dataset_with_next_action(variant['env_name']), replay_buffer)
-        
-    else:  # do the standard thing
+
+    elif variant['cql_orginal']:
+
+        print('Internal report: Loading data for CQL original')
 
         replay_buffer = EnvReplayBuffer(
             variant['replay_buffer_size'],
             expl_env,
         )
-        
-        # if variant['load_buffer'] and buffer_filename is not None:
-        #     replay_buffer.load_buffer(buffer_filename)
-        # elif 'random-expert' in variant['env_name']:
-        #     load_hdf5(d4rl.basic_dataset(eval_env), replay_buffer)
-        # else:
-        #     load_hdf5(d4rl.qlearning_dataset(eval_env), replay_buffer)
+
+        if variant['load_buffer'] and buffer_filename is not None:
+            replay_buffer.load_buffer(buffer_filename)
+        elif 'random-expert' in variant['env_name']:
+            load_hdf5(d4rl.basic_dataset(eval_env), replay_buffer)
+        else:
+            load_hdf5(d4rl.qlearning_dataset(eval_env), replay_buffer)
+
+    else:
+
+        replay_buffer = EnvReplayBuffer(
+            variant['replay_buffer_size'],
+            expl_env,
+        )
+
         load_hdf5(qlearning_dataset_wonjoon(variant['env_name']), replay_buffer)
 
     # =========================================================
@@ -256,12 +266,14 @@ if __name__ == "__main__":
     parser.add_argument('--seed', default=10, type=int)
     parser.add_argument('--use_sil', default='False', type=str)  # added for the new idea
     parser.add_argument('--cql_beta', default='False', type=str)  # added for the new idea
+    parser.add_argument('--cql_original', default='False', type=str)
 
     args = parser.parse_args()
     enable_gpus(args.gpu)
     
     variant['use_sil'] = (True if args.use_sil == 'True' else False)
     variant['cql_beta'] = (True if args.cql_beta == 'True' else False)
+    variant['cql_original'] = (True if args.cql_beta == 'True' else False)
 
     assert not (variant['use_sil'] and variant['cql_beta']), "can't use these two together at this point"
     
@@ -299,6 +311,8 @@ if __name__ == "__main__":
         algo_name += '_SIL'
     elif variant['cql_beta']:
         algo_name += '_BETA'
+    elif variant['cql_original']:
+        algo_name += '_ORIGINAL'
 
     log_dir = mhf.get_log_dir(
             base_dir='results',
