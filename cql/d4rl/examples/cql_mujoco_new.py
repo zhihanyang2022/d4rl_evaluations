@@ -133,7 +133,7 @@ def experiment(variant):
 
         load_hdf5_with_next_action(qlearning_dataset_with_next_action(variant['env_name']), replay_buffer)
 
-    elif variant['cql_orginal']:
+    elif variant['cql_original']:
 
         print('Internal report: Loading data for CQL original')
 
@@ -273,7 +273,7 @@ if __name__ == "__main__":
     
     variant['use_sil'] = (True if args.use_sil == 'True' else False)
     variant['cql_beta'] = (True if args.cql_beta == 'True' else False)
-    variant['cql_original'] = (True if args.cql_beta == 'True' else False)
+    variant['cql_original'] = (True if args.cql_original == 'True' else False)
 
     assert not (variant['use_sil'] and variant['cql_beta']), "can't use these two together at this point"
     
