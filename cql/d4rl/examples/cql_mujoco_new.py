@@ -110,7 +110,9 @@ def experiment(variant):
     # different dataset modifications
     
     if variant['use_sil']:
-        
+
+        print('Loading data for CQL SIL')
+
         replay_buffer = EnvReplayBufferWithReturn(
             variant['replay_buffer_size'],
             expl_env,
@@ -120,7 +122,7 @@ def experiment(variant):
 
     elif variant['cql_beta']:
 
-        print('DOING CQL BETA')
+        print('Loading data for CQL beta')
 
         replay_buffer = EnvReplayBufferWithNextAction(
             variant['replay_buffer_size'],
@@ -130,6 +132,8 @@ def experiment(variant):
         load_hdf5_with_next_action(qlearning_dataset_with_next_action(variant['env_name']), replay_buffer)
         
     else:  # do the standard thing
+
+        print('Loading data for CQL')
         
         replay_buffer = EnvReplayBuffer(
             variant['replay_buffer_size'],

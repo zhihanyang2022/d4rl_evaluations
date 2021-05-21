@@ -127,6 +127,8 @@ class CQLTrainer(TorchTrainer):
 
         # For implementation on the 
         self.discrete = False
+
+        self.first_update = True
     
     def _get_tensor_values(self, obs, actions, network=None):
         action_shape = actions.shape[0]
@@ -157,6 +159,12 @@ class CQLTrainer(TorchTrainer):
         
         mc_returns = batch['mc_returns'] if 'mc_returns' in batch.keys() else None
         next_actions = batch['next_actions'] if 'next_actions' in batch.keys() else None
+
+        if self.first_update:
+            if mc_returns is not None:
+                print('Internal report: CQL-SIL loaded mc returns')
+            if next_actions is not None:
+                print('Internal report: CQL-BETA loaded next actions')
 
         """
         Policy and Alpha Loss
@@ -209,7 +217,8 @@ class CQLTrainer(TorchTrainer):
                 obs, reparameterize=True, return_log_prob=True,
             )
         else:
-            # added for CQL beta
+            if self.first_update:
+                print('Internal report: CQL-BETA is using next actions instead of policy actions')
             new_next_actions = next_actions
             new_log_pi = self.policy.log_prob(next_obs, next_actions)
 
@@ -240,6 +249,8 @@ class CQLTrainer(TorchTrainer):
             qf2_loss = self.qf_criterion(q2_pred, q_target)
             
         if mc_returns is not None:  # do SIL for Q
+            if self.first_update:
+                print('Internal report: CQL-SIL is computing SIL loss')
             qf1_sil_loss = torch.mean(F.relu(mc_returns - q1_pred) ** 2)
             qf2_sil_loss = torch.mean(F.relu(mc_returns - q2_pred) ** 2)
 
@@ -294,6 +305,8 @@ class CQLTrainer(TorchTrainer):
             qf1_loss = qf1_loss + min_qf1_loss
             qf2_loss = qf2_loss + min_qf2_loss
         else:
+            if self.first_update:
+                print('Internal report: CQL-BETA is adding SIL loss to original Q loss')
             qf1_loss = qf1_loss + min_qf1_loss + qf1_sil_loss
             qf2_loss = qf2_loss + min_qf2_loss + qf2_sil_loss
 
@@ -326,6 +339,9 @@ class CQLTrainer(TorchTrainer):
             ptu.soft_update_from_to(
                 self.qf2, self.target_qf2, self.soft_target_tau
             )
+
+        self.first_update = False
+
         """
         Save some statistics for eval
         """
