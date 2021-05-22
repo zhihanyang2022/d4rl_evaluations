@@ -313,6 +313,8 @@ if __name__ == "__main__":
         algo_name += '_BETA'
     elif variant['cql_original']:
         algo_name += '_ORIGINAL'
+    else:
+        raise NotImplementedError
 
     log_dir = mhf.get_log_dir(
             base_dir='results',
