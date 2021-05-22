@@ -313,8 +313,10 @@ if __name__ == "__main__":
         algo_name += '_BETA'
     elif variant['cql_original']:
         algo_name += '_ORIGINAL'
+    elif (not variant['use_sil']) and (not variant['cql_beta']) and (not variant['cql_original']):
+        pass  # just use default algo_name
     else:
-        raise NotImplementedError
+        raise NotImplementedError  # prevent invalid algo_name
 
     log_dir = mhf.get_log_dir(
             base_dir='results',
