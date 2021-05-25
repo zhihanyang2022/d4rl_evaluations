@@ -123,9 +123,9 @@ def experiment(variant):
         
         load_hdf5_with_mc_return(qlearning_dataset_with_mc_return(eval_env), replay_buffer)
 
-    elif variant['cql_beta']:
+    elif variant['cql_beta_v0']:
 
-        print('Internal report: Loading data for CQL beta')
+        print('Internal report: Loading data for CQL beta v0')
 
         replay_buffer = EnvReplayBufferWithNextAction(
             variant['replay_buffer_size'],
@@ -133,6 +133,10 @@ def experiment(variant):
         )
 
         load_hdf5_with_next_action(qlearning_dataset_with_next_action(variant['env_name']), replay_buffer)
+
+    elif variant['cql_beta_v2']:
+
+        pass
 
     elif variant['cql_original']:
 

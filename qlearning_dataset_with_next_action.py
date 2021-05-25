@@ -108,6 +108,70 @@ def _parse_v0(env_id):
     return trajs
 
 
+def parse_v2(env_id, drop_trailings=False):
+    ## Parse the dataset into set of trajectories
+    dataset = gym.make(env_id).get_dataset()
+    obs, actions, rewards, terminals, timeouts = \
+        dataset['observations'], \
+        dataset['actions'], \
+        dataset['rewards'], \
+        dataset['terminals'], \
+        dataset['timeouts']
+
+    assert len(obs) == len(actions) == len(rewards) == len(terminals) == len(timeouts)
+    N = len(obs)
+
+    trajs = []
+
+    start = 0
+    while start < N:
+        end = start
+        while not (terminals[end] or timeouts[end]) and end < N - 1:
+            end += 1
+
+        if timeouts[end] or (end == N - 1 and not drop_trailings):
+            # the trajectory ends due to some external cut-offs
+            # since the next-state is not available, it drops the last action.
+
+            traj = Trajectory(
+                states=obs[start:end + 1],
+                actions=actions[start:end],
+                rewards=rewards[start:end],
+                dones=terminals[start:end].astype(np.bool),
+                frames=None,
+            )
+
+            assert np.all(traj.dones == False)
+
+        elif terminals[end]:
+            # the trajectory ends normally.
+            # since the next state will not be (should not be, actually) used by any algorithms,
+            # we add null states (zero-states) at the end.
+
+            traj = Trajectory(
+                states=np.concatenate([obs[start:end + 1], np.zeros_like(obs[0])[None]], axis=0),
+                actions=actions[start:end + 1],
+                rewards=rewards[start:end + 1],
+                dones=terminals[start:end + 1].astype(np.bool),
+                frames=None,
+            )
+
+            assert np.all(traj.dones[:-1] == False) and traj.dones[-1]
+
+        elif end == N - 1 and drop_trailings:
+            break
+
+        else:
+            assert False
+
+        if len(traj.states) > 1:  # some trajectories are extremely short in -medium-replay dataset (due to unexpected timeout caused by RLKIT); https://github.com/rail-berkeley/d4rl/issues/86#issuecomment-778566671
+            trajs.append(traj)
+
+        start = end + 1
+
+    return trajs
+
+
 def parse_S_A_R_D_NS_from_trajs(trajs):
 
     s, a, r, d, ns, = [], [], [], [], []
@@ -168,8 +232,21 @@ def qlearning_dataset_wonjoon(env_id):
     }
 
 
-def qlearning_dataset_with_next_action(env_id):
+def qlearning_dataset_with_next_action_v0(env_id):
     trajs = _parse_v0(env_id)
+    s, a, r, d, ns, na = parse_S_A_R_D_NS_NA_from_trajs(trajs)
+    return {
+        'observations': np.array(s),
+        'actions': np.array(a),
+        'rewards': np.array(r),
+        'terminals': np.array(d),
+        'next_observations': np.array(ns),
+        'next_actions': np.array(na)
+    }
+
+
+def qlearning_dataset_with_next_action_v2(env_id):
+    trajs = parse_v2(env_id)
     s, a, r, d, ns, na = parse_S_A_R_D_NS_NA_from_trajs(trajs)
     return {
         'observations': np.array(s),
