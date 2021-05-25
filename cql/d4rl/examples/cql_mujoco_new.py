@@ -21,6 +21,7 @@ from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 
 import argparse, os
 import numpy as np
+import torch
 
 import h5py
 import d4rl, gym
@@ -183,6 +184,15 @@ def experiment(variant):
     algorithm.to(ptu.device)
     algorithm.train()
 
+    print('Saving networks.')
+
+    DIR = variant['model_save_dir']
+    torch.save(policy.state_dict(), os.path.join(DIR, 'policy.pth'))
+    torch.save(qf1.state_dict(), os.path.join(DIR, 'qf1.pth'))
+    torch.save(qf2.state_dict(), os.path.join(DIR, 'qf2.pth'))
+
+    print('Done saving networks.')
+
 def enable_gpus(gpu_str):
     if (gpu_str is not ""):
         os.environ["CUDA_VISIBLE_DEVICES"] = gpu_str
@@ -331,8 +341,10 @@ if __name__ == "__main__":
     # later on setup_logger would re-create it anyway
 
     setup_logger(
-        log_dir=log_dir
+        log_dir=log_dir,
     )
+
+    variant['model_save_dir'] = log_dir
 
     ptu.set_gpu_mode(True)
     experiment(variant)
