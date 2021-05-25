@@ -3,7 +3,7 @@ import sys
 sys.path.append('.')
 import my_helper_functions as mhf
 from qlearning_dataset_with_mc_return import qlearning_dataset_with_mc_return
-from qlearning_dataset_with_next_action import qlearning_dataset_wonjoon, qlearning_dataset_with_next_action
+from qlearning_dataset_with_next_action import qlearning_dataset_wonjoon, qlearning_dataset_with_next_action_v0, qlearning_dataset_with_next_action_v2
 
 sys.path.append('cql/d4rl')
 
@@ -132,11 +132,18 @@ def experiment(variant):
             expl_env,
         )
 
-        load_hdf5_with_next_action(qlearning_dataset_with_next_action(variant['env_name']), replay_buffer)
+        load_hdf5_with_next_action(qlearning_dataset_with_next_action_v0(variant['env_name']), replay_buffer)
 
     elif variant['cql_beta_v2']:
 
-        pass
+        print('Internal report: Loading data for CQL beta v0')
+
+        replay_buffer = EnvReplayBufferWithNextAction(
+            variant['replay_buffer_size'],
+            expl_env,
+        )
+
+        load_hdf5_with_next_action(qlearning_dataset_with_next_action_v2(variant['env_name']), replay_buffer)
 
     elif variant['cql_original']:
 
