@@ -138,7 +138,7 @@ def experiment(variant):
 
         elif variant['env_name'].endswith('v2'):
 
-            print('Internal report: Loading data for CQL beta v0')
+            print('Internal report: Loading data for CQL beta v2')
 
             replay_buffer = EnvReplayBufferWithNextAction(
                 variant['replay_buffer_size'],
