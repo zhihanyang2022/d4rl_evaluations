@@ -123,27 +123,33 @@ def experiment(variant):
         
         load_hdf5_with_mc_return(qlearning_dataset_with_mc_return(eval_env), replay_buffer)
 
-    elif variant['cql_beta_v0']:
+    elif variant['cql_beta']:
 
-        print('Internal report: Loading data for CQL beta v0')
+        if variant['env_name'].endswith('v0'):
 
-        replay_buffer = EnvReplayBufferWithNextAction(
-            variant['replay_buffer_size'],
-            expl_env,
-        )
+            print('Internal report: Loading data for CQL beta v0')
 
-        load_hdf5_with_next_action(qlearning_dataset_with_next_action_v0(variant['env_name']), replay_buffer)
+            replay_buffer = EnvReplayBufferWithNextAction(
+                variant['replay_buffer_size'],
+                expl_env,
+            )
 
-    elif variant['cql_beta_v2']:
+            load_hdf5_with_next_action(qlearning_dataset_with_next_action_v0(variant['env_name']), replay_buffer)
 
-        print('Internal report: Loading data for CQL beta v0')
+        elif variant['env_name'].endswith('v2'):
 
-        replay_buffer = EnvReplayBufferWithNextAction(
-            variant['replay_buffer_size'],
-            expl_env,
-        )
+            print('Internal report: Loading data for CQL beta v0')
 
-        load_hdf5_with_next_action(qlearning_dataset_with_next_action_v2(variant['env_name']), replay_buffer)
+            replay_buffer = EnvReplayBufferWithNextAction(
+                variant['replay_buffer_size'],
+                expl_env,
+            )
+
+            load_hdf5_with_next_action(qlearning_dataset_with_next_action_v2(variant['env_name']), replay_buffer)
+
+        else:
+
+            raise NotImplementedError
 
     elif variant['cql_original']:
 
